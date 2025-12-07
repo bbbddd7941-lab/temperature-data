@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>온도 측정 데이터 입력기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --danger-color: #f44336;
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            padding: 10px;
+            color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            color: #666;
+            margin: 3px 0;
+        }
+
+        .school-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .instructions {
+            background: #f3e5f5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #9c27b0;
+        }
+
+        .instructions h3 {
+            color: #7b1fa2;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .instructions h4 {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 6px 0;
+            font-weight: normal;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        /* 표 섹션 */
+        .table-section {
+            margin-bottom: 20px;
+        }
+
+        .table-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 500px;
+        }
+
+        th {
+            background-color: #fff8e1;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid var(--border-color);
+            font-size: 1rem;
+        }
+
+        td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        .time-cell {
+            background-color: #fff9c4;
+            font-weight: bold;
+            width: 70px;
+            font-size: 1rem;
+        }
+
+        .input-cell {
+            background-color: #f0f4ff;
+            padding: 0;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            height: 100%;
+            min-height: 44px;
+            border: none;
+            padding: 12px 8px;
+            font-size: 1rem;
+            text-align: center;
+            background: transparent;
+            color: var(--text-color);
+        }
+
+        input[type="number"]:focus {
+            outline: 3px solid var(--primary-color);
+            background-color: #e3f2fd;
+        }
+
+        /* 그래프 섹션 */
+        .graph-section {
+            margin-bottom: 15px;
+        }
+
+        .graph-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .graph-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .type-btn {
+            flex: 1;
+            min-width: 80px;
+            min-height: 44px;
+            padding: 10px 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: 3px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .type-btn.active {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+
+        .type-btn:active {
+            transform: scale(0.98);
+        }
+
+        .graph-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            background: #fafafa;
+            border: 3px solid var(--primary-color);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            touch-action: none;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .graph-hint {
+            text-align: center;
+            color: #2196F3;
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+
+        /* 버튼 그룹 */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            min-height: 44px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 120px;
+            text-transform: uppercase;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:active {
+            background-color: #45a049;
+            transform: scale(0.98);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:active {
+            background-color: #da190b;
+            transform: scale(0.98);
+        }
+
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 15px;
+            color: var(--success-color);
+            font-size: 1.3rem;
+        }
+
+        .modal-content p {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .close-btn {
+            min-height: 44px;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        /* 반응형 - 작은 모바일 (320px 이상) */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 10px 6px;
+                font-size: 0.9rem;
+            }
+
+            .time-cell {
+                width: 60px;
+                font-size: 0.9rem;
+            }
+
+            input[type="number"] {
+                padding: 10px 6px;
+                font-size: 0.95rem;
+                min-height: 40px;
+            }
+
+            .graph-container {
+                height: 300px;
+            }
+
+            button {
+                min-height: 40px;
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .type-btn {
+                min-height: 40px;
+                font-size: 0.9rem;
+                padding: 8px 12px;
+            }
+        }
+
+        /* 반응형 - 태블릿 세로 (481px ~ 768px) */
+        @media (min-width: 481px) and (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .graph-container {
+                height: 400px;
+            }
+
+            table {
+                min-width: 600px;
+            }
+        }
+
+        /* 반응형 - 태블릿 가로 / 데스크톱 (769px 이상) */
+        @media (min-width: 769px) {
+            body {
+                padding: 20px;
+            }
+
+            .container {
+                padding: 30px;
+            }
+
+            .graph-container {
+                height: 500px;
+            }
+
+            button {
+                min-width: 160px;
+            }
+
+            .type-btn {
+                flex: 0 1 auto;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="school-name">약수초등학교</div>
+            <h1>온도 측정 데이터 입력기</h1>
+            <p>하루 온도 변화를 관찰해요!</p>
+            <p style="font-size: 0.9rem; color: #666; margin-top: 8px; font-style: italic;">Temperature Measurement Data Input Device / 溫度測量數據輸入機</p>
+            <p style="font-size: 0.85rem; color: #888;">Observe temperature changes throughout the day! / 觀察一天溫度變化！</p>
+        </div>
+
+        <div class="instructions">
+            <h3>📝 사용 방법</h3>
+            <h4>Usage Instructions / 使用方法</h4>
+            <ol>
+                <li><strong>표:</strong> 온도 입력 / <strong>Graph:</strong> 클릭 선택</li>
+                <li><strong>그래프:</strong> 물/모래 선택 후 클릭</li>
+                <li><strong>초기화:</strong> 모든 데이터 삭제</li>
+                <li><strong>저장:</strong> 결과를 사진으로 저장</li>
+            </ol>
+        </div>
+
+        <!-- 표 섹션 -->
+        <div class="table-section">
+            <h2>1️⃣ 시간별 온도 입력하기</h2>
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>시간(분)</th>
+                            <th colspan="6">🔆 전등 켰을 때<br>(0~10분)</th>
+                            <th colspan="5">🌙 전등 껐을 때<br>(12~20분)</th>
+                        </tr>
+                        <tr>
+                            <th>분</th>
+                            <th>0</th>
+                            <th>2</th>
+                            <th>4</th>
+                            <th>6</th>
+                            <th>8</th>
+                            <th>10</th>
+                            <th>12</th>
+                            <th>14</th>
+                            <th>16</th>
+                            <th>18</th>
+                            <th>20</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="time-cell">물<br>(℃)</td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="0"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="2"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="4"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="6"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="8"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="10"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="12"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="14"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="16"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="18"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input water" data-time="20"></td>
+                        </tr>
+                        <tr>
+                            <td class="time-cell">모래<br>(℃)</td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="0"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="2"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="4"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="6"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="8"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="10"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="12"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="14"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="16"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="18"></td>
+                            <td class="input-cell"><input type="number" step="0.1" min="10" max="100" class="temp-input sand" data-time="20"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 그래프 섹션 -->
+        <div class="graph-section">
+            <h2>2️⃣ 온도 변화 그래프 그리기</h2>
+            <div class="graph-controls">
+                <button class="type-btn active" id="waterBtn" data-type="water">💧 물</button>
+                <button class="type-btn" id="sandBtn" data-type="sand">🏜️ 모래</button>
+            </div>
+            <div class="graph-container">
+                <svg id="graph" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <pattern id="grid" width="50" height="30" patternUnits="userSpaceOnUse">
+                            <path d="M 50 0 L 0 0 0 30" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+                        </pattern>
+                    </defs>
+                    <rect width="1000" height="600" fill="url(#grid)"/>
+
+                    <line x1="80" y1="50" x2="80" y2="550" stroke="#333" stroke-width="3"/>
+                    <line x1="80" y1="550" x2="950" y2="550" stroke="#333" stroke-width="3"/>
+
+                    <text x="30" y="60" font-size="18" font-weight="bold" text-anchor="end">100</text>
+                    <text x="30" y="130" font-size="18" font-weight="bold" text-anchor="end">80</text>
+                    <text x="30" y="200" font-size="18" font-weight="bold" text-anchor="end">60</text>
+                    <text x="30" y="270" font-size="18" font-weight="bold" text-anchor="end">40</text>
+                    <text x="30" y="340" font-size="18" font-weight="bold" text-anchor="end">20</text>
+                    <text x="30" y="410" font-size="18" font-weight="bold" text-anchor="end">10</text>
+
+                    <line x1="75" y1="50" x2="80" y2="50" stroke="#333" stroke-width="2"/>
+                    <line x1="75" y1="120" x2="80" y2="120" stroke="#333" stroke-width="2"/>
+                    <line x1="75" y1="190" x2="80" y2="190" stroke="#333" stroke-width="2"/>
+                    <line x1="75" y1="260" x2="80" y2="260" stroke="#333" stroke-width="2"/>
+                    <line x1="75" y1="330" x2="80" y2="330" stroke="#333" stroke-width="2"/>
+                    <line x1="75" y1="400" x2="80" y2="400" stroke="#333" stroke-width="2"/>
+
+                    <text x="100" y="570" font-size="14" font-weight="bold" text-anchor="middle">0</text>
+                    <text x="100" y="588" font-size="12" text-anchor="middle">🔆</text>
+                    <text x="190" y="570" font-size="14" font-weight="bold" text-anchor="middle">2</text>
+                    <text x="190" y="588" font-size="12" text-anchor="middle">🔆</text>
+                    <text x="280" y="570" font-size="14" font-weight="bold" text-anchor="middle">4</text>
+                    <text x="280" y="588" font-size="12" text-anchor="middle">🔆</text>
+                    <text x="370" y="570" font-size="14" font-weight="bold" text-anchor="middle">6</text>
+                    <text x="370" y="588" font-size="12" text-anchor="middle">🔆</text>
+                    <text x="460" y="570" font-size="14" font-weight="bold" text-anchor="middle">8</text>
+                    <text x="460" y="588" font-size="12" text-anchor="middle">🔆</text>
+                    <text x="550" y="570" font-size="14" font-weight="bold" text-anchor="middle">10</text>
+                    <text x="550" y="588" font-size="12" text-anchor="middle">🔆</text>
+                    <text x="640" y="570" font-size="14" font-weight="bold" text-anchor="middle">12</text>
+                    <text x="640" y="588" font-size="12" text-anchor="middle">🌙</text>
+                    <text x="730" y="570" font-size="14" font-weight="bold" text-anchor="middle">14</text>
+                    <text x="730" y="588" font-size="12" text-anchor="middle">🌙</text>
+                    <text x="820" y="570" font-size="14" font-weight="bold" text-anchor="middle">16</text>
+                    <text x="820" y="588" font-size="12" text-anchor="middle">🌙</text>
+                    <text x="910" y="570" font-size="14" font-weight="bold" text-anchor="middle">18</text>
+                    <text x="910" y="588" font-size="12" text-anchor="middle">🌙</text>
+
+                    <line x1="100" y1="550" x2="100" y2="555" stroke="#333" stroke-width="2"/>
+                    <line x1="190" y1="550" x2="190" y2="555" stroke="#333" stroke-width="2"/>
+                    <line x1="280" y1="550" x2="280" y2="555" stroke="#333" stroke-width="2"/>
+                    <line x1="370" y1="550" x2="370" y2="555" stroke="#333" stroke-width="2"/>
+                    <line x1="460" y1="550" x2="460" y2="555" stroke="#333" stroke-width="2"/>
+                    <line x1="550" y1="550" x2="550" y2="555" stroke="#333" stroke-width="2"/>
+                    <line x1="640" y1="550" x2="640" y2="555" stroke="#333" stroke-width="2"/>
+                    <line x1="730" y1="550" x2="730" y2="555" stroke="#333" stroke-width="2"/>
+                    <line x1="820" y1="550" x2="820" y2="555" stroke="#333" stroke-width="2"/>
+                    <line x1="910" y1="550" x2="910" y2="555" stroke="#333" stroke-width="2"/>
+
+                    <text x="500" y="595" font-size="18" font-weight="bold" text-anchor="middle">시간(분)</text>
+                    <text x="15" y="300" font-size="18" font-weight="bold" text-anchor="middle" transform="rotate(-90 15 300)">온도(℃)</text>
+
+                    <g id="graphLine"></g>
+                    <g id="graphPoints"></g>
+                </svg>
+            </div>
+            <p class="graph-hint">💡 <span id="selectedType">물</span> 선택됨 - 그래프를 클릭하여 온도 입력</p>
+        </div>
+
+        <!-- 버튼 그룹 -->
+        <div class="button-group">
+            <button class="btn-success" id="saveImageBtn">📷 저장</button>
+            <button class="btn-danger" id="resetBtn">🔄 초기화</button>
+        </div>
+    </div>
+
+    <!-- 저장 완료 모달 -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <h2>✅ 저장 완료!</h2>
+            <p>이미지가 다운로드되었습니다.</p>
+            <button class="close-btn" onclick="closeModal()">확인</button>
+        </div>
+    </div>
+
+    <script>
+        const TIMES = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
+        const X_POSITIONS = [100, 190, 280, 370, 460, 550, 640, 730, 820, 910, 1000];
+        const Y_SCALE = 500 / 90;
+        const MIN_TEMP = 10;
+        const MAX_TEMP = 100;
+
+        let graphData = {
+            water: {},
+            sand: {}
+        };
+
+        let selectedType = 'water';
+
+        TIMES.forEach(time => {
+            graphData.water[time] = null;
+            graphData.sand[time] = null;
+        });
+
+        // 버튼 선택 이벤트
+        document.getElementById('waterBtn').addEventListener('click', function() {
+            selectedType = 'water';
+            updateTypeSelection();
+        });
+
+        document.getElementById('sandBtn').addEventListener('click', function() {
+            selectedType = 'sand';
+            updateTypeSelection();
+        });
+
+        function updateTypeSelection() {
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-type="${selectedType}"]`).classList.add('active');
+            document.getElementById('selectedType').textContent = selectedType === 'water' ? '물' : '모래';
+        }
+
+        // 표 입력 이벤트
+        document.querySelectorAll('.temp-input').forEach(input => {
+            input.addEventListener('input', function() {
+                const time = parseInt(this.dataset.time);
+                const type = this.classList.contains('water') ? 'water' : 'sand';
+                const value = this.value;
+                
+                if (value === '' || value === '-') {
+                    graphData[type][time] = null;
+                } else {
+                    const temp = parseFloat(value);
+                    graphData[type][time] = temp >= MIN_TEMP && temp <= MAX_TEMP ? temp : null;
+                }
+                
+                updateGraph();
+            });
+        });
+
+        // 그래프 클릭 이벤트
+        document.getElementById('graph').addEventListener('click', function(e) {
+            const svg = this;
+            const rect = svg.getBoundingClientRect();
+            const scaleX = svg.viewBox.baseVal.width / rect.width;
+            const scaleY = svg.viewBox.baseVal.height / rect.height;
+            
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            let closestTime = TIMES[0];
+            let minDistance = Math.abs(x - X_POSITIONS[0]);
+
+            for (let i = 1; i < TIMES.length; i++) {
+                const distance = Math.abs(x - X_POSITIONS[i]);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestTime = TIMES[i];
+                }
+            }
+
+            let temp = Math.round(((550 - y) / Y_SCALE) * 10) / 10;
+            temp = Math.max(MIN_TEMP, Math.min(MAX_TEMP, temp));
+
+            graphData[selectedType][closestTime] = temp;
+            
+            document.querySelector(`input[data-time="${closestTime}"].${selectedType}`).value = temp;
+            
+            updateGraph();
+        });
+
+        // 그래프 업데이트
+        function updateGraph() {
+            const svg = document.getElementById('graph');
+            const graphLine = document.getElementById('graphLine');
+            const graphPoints = document.getElementById('graphPoints');
+
+            graphLine.innerHTML = '';
+            graphPoints.innerHTML = '';
+
+            drawTypeData('water', '#2196F3', graphLine, graphPoints);
+            drawTypeData('sand', '#FF9800', graphLine, graphPoints);
+        }
+
+        // 각 타입별 데이터 그리기
+        function drawTypeData(type, color, graphLine, graphPoints) {
+            const validPoints = [];
+            TIMES.forEach((time, index) => {
+                if (graphData[type][time] !== null && graphData[type][time] !== undefined) {
+                    const x = X_POSITIONS[index];
+                    const y = 550 - (graphData[type][time] * Y_SCALE);
+                    validPoints.push({ time, x, y, temp: graphData[type][time] });
+                }
+            });
+
+            if (validPoints.length > 0) {
+                let pathData = `M ${validPoints[0].x} ${validPoints[0].y}`;
+                for (let i = 1; i < validPoints.length; i++) {
+                    pathData += ` L ${validPoints[i].x} ${validPoints[i].y}`;
+                }
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('stroke', color);
+                path.setAttribute('stroke-width', '4');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke-linecap', 'round');
+                path.setAttribute('stroke-linejoin', 'round');
+                graphLine.appendChild(path);
+
+                validPoints.forEach(point => {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', point.x);
+                    circle.setAttribute('cy', point.y);
+                    circle.setAttribute('r', '8');
+                    circle.setAttribute('fill', color);
+                    const darkerColor = color === '#2196F3' ? '#1565C0' : '#F57C00';
+                    circle.setAttribute('stroke', darkerColor);
+                    circle.setAttribute('stroke-width', '2');
+                    graphPoints.appendChild(circle);
+
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', point.x);
+                    text.setAttribute('y', point.y - 15);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('font-size', '16');
+                    text.setAttribute('font-weight', 'bold');
+                    text.setAttribute('fill', color);
+                    text.textContent = point.temp + '℃';
+                    graphPoints.appendChild(text);
+                });
+            }
+        }
+
+        // 초기화 함수
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            if (confirm('모든 데이터를 삭제하시겠습니까?')) {
+                TIMES.forEach(time => {
+                    graphData.water[time] = null;
+                    graphData.sand[time] = null;
+                    document.querySelector(`input[data-time="${time}"].water`).value = '';
+                    document.querySelector(`input[data-time="${time}"].sand`).value = '';
+                });
+                updateGraph();
+            }
+        });
+
+        // 이미지 저장 함수
+        document.getElementById('saveImageBtn').addEventListener('click', function() {
+            html2canvas(document.querySelector('.container'), {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = '온도_측정_데이터_' + new Date().getTime() + '.png';
+                link.click();
+                
+                showModal();
+            });
+        });
+
+        function showModal() {
+            document.getElementById('saveModal').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('saveModal').classList.remove('show');
+            }, 2000);
+        }
+
+        function closeModal() {
+            document.getElementById('saveModal').classList.remove('show');
+        }
+
+        updateGraph();
+    </script>
+</body>
+</html>
