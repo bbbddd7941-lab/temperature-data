@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>온도 측정 데이터 입력기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2196F3;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --danger-color: #f44336;
+            --bg-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            padding: 10px;
+            color: var(--text-color);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .lang-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: 3px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            color: #666;
+            margin: 3px 0;
+        }
+
+        .school-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .instructions {
+            background: #f3e5f5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #9c27b0;
+        }
+
+        .instructions h3 {
+            color: #7b1fa2;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+        }
+
+        .instructions-cantonese {
+            background: #e8f5e9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 12px;
+            border-left: 4px solid #4CAF50;
+            font-size: 0.9rem;
+        }
+
+        .instructions-cantonese h4 {
+            color: #2e7d32;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .instructions-cantonese p {
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        /* 표 섹션 */
+        .table-section {
+            margin-bottom: 20px;
+        }
+
+        .table-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .table-wrapper::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #1565C0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th {
+            background-color: #fff8e1;
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid var(--border-color);
+            font-size: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        .time-cell {
+            background-color: #fff9c4;
+            font-weight: bold;
+            width: 70px;
+            font-size: 1rem;
+            position: sticky;
+            left: 0;
+            z-index: 5;
+        }
+
+        .input-cell {
+            background-color: #f0f4ff;
+            padding: 0;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            height: 100%;
+            min-height: 44px;
+            border: none;
+            padding: 12px 8px;
+            font-size: 1rem;
+            text-align: center;
+            background: transparent;
+            color: var(--text-color);
+        }
+
+        input[type="number"]:focus {
+            outline: 3px solid var(--primary-color);
+            background-color: #e3f2fd;
+        }
+
+        /* 그래프 섹션 */
+        .graph-section {
+            margin-bottom: 15px;
+        }
+
+        .graph-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
+        .graph-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .type-btn {
+            flex: 1;
+            min-width: 80px;
+            min-height: 44px;
+            padding: 10px 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: 3px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .type-btn.active {
+            border-color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+
+        .type-btn:active {
+            transform: scale(0.98);
+        }
+
+        .graph-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            background: #fafafa;
+            border: 3px solid var(--primary-color);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            touch-action: none;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .graph-hint {
+            text-align: center;
+            color: #2196F3;
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+
+        /* 버튼 그룹 */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            min-height: 44px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 120px;
+            text-transform: uppercase;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:active {
+            background-color: #45a049;
+            transform: scale(0.98);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:active {
+            background-color: #da190b;
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:active {
+            background-color: #1565C0;
+            transform: scale(0.98);
+        }
+
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 15px;
+            color: var(--success-color);
+            font-size: 1.3rem;
+        }
+
+        .modal-content p {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .close-btn {
+            min-height: 44px;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        /* 반응형 - 작은 모바일 (320px 이상) */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 10px 6px;
+                font-size: 0.9rem;
+            }
+
+            .time-cell {
+                width: 60px;
+                font-size: 0.9rem;
+            }
+
+            input[type="number"] {
+                padding: 10px 6px;
+                font-size: 0.95rem;
+                min-height: 40px;
+            }
+
+            .graph-container {
+                height: 300px;
+            }
+
+            button {
+                min-height: 40px;
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .type-btn {
+                min-height: 40px;
+                font-size: 0.9rem;
+                padding: 8px 12px;
+            }
+
+            .table-wrapper {
+                max-height: 350px;
+            }
+
+            .tab-btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+
+            .lang-btn {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* 반응형 - 태블릿 세로 (481px ~ 768px) */
+        @media (min-width: 481px) and (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            .graph-container {
+                height: 400px;
+            }
+
+            table {
+                min-width: 650px;
+            }
+
+            .table-wrapper {
+                max-height: 420px;
+            }
+        }
+
+        /* 반응형 - 태블릿 가로 / 데스크톱 (769px 이상) */
+        @media (min-width: 769px) {
+            body {
+                padding: 20px;
+            }
+
+            .container {
+                padding: 30px;
+            }
+
+            .graph-container {
+                height: 500px;
+            }
+
+            button {
+                min-width: 140px;
+            }
+
+            .type-btn {
+                flex: 0 1 auto;
+                min-width: 100px;
+            }
+
+            .table-wrapper {
+                max-height: 500px;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 언어 선택 -->
+        <div class="language-selector">
+            <button class="lang-btn active" onclick="switchLanguage('ko')">한국어</button>
+            <button class="lang-btn" onclick="switchLanguage('yue')">廣東話 (粵語)</button>
+        </div>
+
+        <!-- 탭 버튼 -->
+        <div class="tab-buttons">
+            <button class="tab-btn active" onclick="switchTab('input')">📊 데이터 입력</button>
+            <button class="tab-btn" onclick="switchTab('worksheet')">📝 학습지 다운로드</button>
+        </div>
+
+        <!-- 탭 1: 데이터 입력 -->
+        <div id="input" class="tab-content active">
+            <div class="header">
+                <div class="school-name" id="schoolName">약수초등학교</div>
+                <h1 id="title">온도 측정 데이터 입력기</h1>
+                <p id="subtitle">1분 단위로 10분 동안 온도 변화를 관찰해요!</p>
+            </div>
+
+            <div class="instructions">
+                <h3 id="instrTitle">📝 사용 방법</h3>
+                <ol>
+                    <li><strong id="instr1">표:</strong> <span id="instr1Desc">시간별 온도 입력 (1분 단위, 15~40℃)</span></li>
+                    <li><strong id="instr2">그래프:</strong> <span id="instr2Desc">물/모래 선택 후 클릭으로 입력</span></li>
+                    <li><strong id="instr3">초기화:</strong> <span id="instr3Desc">모든 데이터 삭제</span></li>
+                    <li><strong id="instr4">이미지 저장:</strong> <span id="instr4Desc">결과를 사진으로 저장</span></li>
+                </ol>
+
+                <div class="instructions-cantonese" id="cantonese">
+                    <h4>🇭🇰 廣東話使用說明</h4>
+                    <p>1. <strong>表格：</strong> 輸入每分鐘的溫度（1分鐘為單位，15～40℃）</p>
+                    <p>2. <strong>圖表：</strong> 選擇水或沙，然後按一下以輸入溫度</p>
+                    <p>3. <strong>重新設置：</strong> 刪除所有數據</p>
+                    <p>4. <strong>保存圖像：</strong> 將結果保存為照片</p>
+                </div>
+            </div>
+
+            <!-- 표 섹션 -->
+            <div class="table-section">
+                <h2 id="tableTitle">1️⃣ 시간별 온도 입력하기</h2>
+                <div class="table-wrapper">
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th id="timeHeader">시간(분)</th>
+                                <th colspan="6" id="lightOnHeader">🔆 전등 켰을 때<br>(0~5분)</th>
+                                <th colspan="5" id="lightOffHeader">🌙 전등 껐을 때<br>(6~10분)</th>
+                            </tr>
+                            <tr>
+                                <th>분</th>
+                                <th>0</th>
+                                <th>1</th>
+                                <th>2</th>
+                                <th>3</th>
+                                <th>4</th>
+                                <th>5</th>
+                                <th>6</th>
+                                <th>7</th>
+                                <th>8</th>
+                                <th>9</th>
+                                <th>10</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="time-cell" id="waterLabel">물<br>(℃)</td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="0"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="1"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="2"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="3"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="4"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="5"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="6"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="7"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="8"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="9"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input water" data-time="10"></td>
+                            </tr>
+                            <tr>
+                                <td class="time-cell" id="sandLabel">모래<br>(℃)</td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="0"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="1"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="2"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="3"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="4"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="5"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="6"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="7"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="8"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="9"></td>
+                                <td class="input-cell"><input type="number" step="0.1" min="15" max="35" inputmode="decimal" placeholder="0.0" class="temp-input sand" data-time="10"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 그래프 섹션 -->
+            <div class="graph-section">
+                <h2 id="graphTitle">2️⃣ 온도 변화 그래프 그리기</h2>
+                <div class="graph-controls">
+                    <button class="type-btn active" id="waterBtn" data-type="water">💧 <span id="waterBtnLabel">물</span></button>
+                    <button class="type-btn" id="sandBtn" data-type="sand">🏜️ <span id="sandBtnLabel">모래</span></button>
+                </div>
+                <div class="graph-container">
+                    <svg id="graph" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet">
+                        <defs>
+                            <pattern id="grid" width="50" height="30" patternUnits="userSpaceOnUse">
+                                <path d="M 50 0 L 0 0 0 30" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+                            </pattern>
+                        </defs>
+                        <rect width="1000" height="600" fill="url(#grid)"/>
+
+                        <!-- 축 -->
+                        <line x1="80" y1="50" x2="80" y2="550" stroke="#333" stroke-width="3"/>
+                        <line x1="80" y1="550" x2="950" y2="550" stroke="#333" stroke-width="3"/>
+
+                        <!-- Y축 레이블 (온도) -->
+                        <text x="30" y="60" font-size="18" font-weight="bold" text-anchor="end">35</text>
+                        <text x="30" y="160" font-size="18" font-weight="bold" text-anchor="end">30</text>
+                        <text x="30" y="260" font-size="18" font-weight="bold" text-anchor="end">25</text>
+                        <text x="30" y="360" font-size="18" font-weight="bold" text-anchor="end">20</text>
+                        <text x="30" y="510" font-size="18" font-weight="bold" text-anchor="end">15</text>
+
+                        <!-- Y축 눈금선 -->
+                        <line x1="75" y1="50" x2="80" y2="50" stroke="#333" stroke-width="2"/>
+                        <line x1="75" y1="150" x2="80" y2="150" stroke="#333" stroke-width="2"/>
+                        <line x1="75" y1="250" x2="80" y2="250" stroke="#333" stroke-width="2"/>
+                        <line x1="75" y1="350" x2="80" y2="350" stroke="#333" stroke-width="2"/>
+                        <line x1="75" y1="500" x2="80" y2="500" stroke="#333" stroke-width="2"/>
+
+                        <!-- X축 레이블 (시간) 및 눈금선 -->
+                        <text x="100" y="570" font-size="14" font-weight="bold" text-anchor="middle">0</text>
+                        <text x="100" y="588" font-size="12" text-anchor="middle">🔆</text>
+                        <line x1="100" y1="550" x2="100" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="177" y="570" font-size="14" font-weight="bold" text-anchor="middle">1</text>
+                        <text x="177" y="588" font-size="12" text-anchor="middle">🔆</text>
+                        <line x1="177" y1="550" x2="177" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="254" y="570" font-size="14" font-weight="bold" text-anchor="middle">2</text>
+                        <text x="254" y="588" font-size="12" text-anchor="middle">🔆</text>
+                        <line x1="254" y1="550" x2="254" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="331" y="570" font-size="14" font-weight="bold" text-anchor="middle">3</text>
+                        <text x="331" y="588" font-size="12" text-anchor="middle">🔆</text>
+                        <line x1="331" y1="550" x2="331" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="408" y="570" font-size="14" font-weight="bold" text-anchor="middle">4</text>
+                        <text x="408" y="588" font-size="12" text-anchor="middle">🔆</text>
+                        <line x1="408" y1="550" x2="408" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="485" y="570" font-size="14" font-weight="bold" text-anchor="middle">5</text>
+                        <text x="485" y="588" font-size="12" text-anchor="middle">🔆</text>
+                        <line x1="485" y1="550" x2="485" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="562" y="570" font-size="14" font-weight="bold" text-anchor="middle">6</text>
+                        <text x="562" y="588" font-size="12" text-anchor="middle">🌙</text>
+                        <line x1="562" y1="550" x2="562" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="639" y="570" font-size="14" font-weight="bold" text-anchor="middle">7</text>
+                        <text x="639" y="588" font-size="12" text-anchor="middle">🌙</text>
+                        <line x1="639" y1="550" x2="639" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="716" y="570" font-size="14" font-weight="bold" text-anchor="middle">8</text>
+                        <text x="716" y="588" font-size="12" text-anchor="middle">🌙</text>
+                        <line x1="716" y1="550" x2="716" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="793" y="570" font-size="14" font-weight="bold" text-anchor="middle">9</text>
+                        <text x="793" y="588" font-size="12" text-anchor="middle">🌙</text>
+                        <line x1="793" y1="550" x2="793" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <text x="870" y="570" font-size="14" font-weight="bold" text-anchor="middle">10</text>
+                        <text x="870" y="588" font-size="12" text-anchor="middle">🌙</text>
+                        <line x1="870" y1="550" x2="870" y2="555" stroke="#333" stroke-width="2"/>
+
+                        <!-- 축 레이블 -->
+                        <text x="500" y="595" font-size="20" font-weight="bold" text-anchor="middle">시간(분)</text>
+                        <text x="15" y="300" font-size="20" font-weight="bold" text-anchor="middle" transform="rotate(-90 15 300)">온도(℃)</text>
+
+                        <!-- 범례 -->
+                        <rect x="100" y="20" width="20" height="20" fill="none" stroke="#2196F3" stroke-width="3"/>
+                        <text x="130" y="35" font-size="14" font-weight="bold" fill="#2196F3" id="legendWater">물</text>
+                        
+                        <rect x="180" y="20" width="20" height="20" fill="none" stroke="#FF9800" stroke-width="3"/>
+                        <text x="210" y="35" font-size="14" font-weight="bold" fill="#FF9800" id="legendSand">모래</text>
+
+                        <!-- 그래프 데이터 포인트와 라인 -->
+                        <g id="graphLine"></g>
+                        <g id="graphPoints"></g>
+                    </svg>
+                </div>
+                <p class="graph-hint">💡 <span id="selectedType">물</span> <span id="graphHintText">선택됨 - 그래프를 클릭하여 온도 입력</span></p>
+            </div>
+
+            <!-- 버튼 그룹 -->
+            <div class="button-group">
+                <button class="btn-success" id="saveImageBtn">📷 <span id="saveBtnText">이미지 저장</span></button>
+                <button class="btn-danger" id="resetBtn">🔄 <span id="resetBtnText">초기화</span></button>
+            </div>
+        </div>
+
+        <!-- 탭 2: 학습지 다운로드 -->
+        <div id="worksheet" class="tab-content">
+            <div class="header">
+                <div class="school-name" id="worksheetSchoolName">약수초등학교</div>
+                <h1 id="worksheetTitle">온도 측정 학습지</h1>
+                <p id="worksheetSubtitle">지면과 수면의 온도는 어떻게 변할까요?</p>
+            </div>
+
+            <div class="button-group" style="margin-top: 15px;">
+                <button class="btn-primary" id="downloadPdfBtn">📥 <span id="downloadBtnText">학습지 PDF 다운로드</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 저장 완료 모달 -->
+    <div id="saveModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">✅ 저장 완료!</h2>
+            <p id="modalMsg">이미지가 다운로드되었습니다.</p>
+            <button class="close-btn" onclick="closeModal()" id="closeModalBtn">확인</button>
+        </div>
+    </div>
+
+    <script>
+        let currentLanguage = 'ko';
+
+        // 다국어 콘텐츠
+        const translations = {
+            ko: {
+                schoolName: '약수초등학교',
+                title: '온도 측정 데이터 입력기',
+                subtitle: '1분 단위로 10분 동안 온도 변화를 관찰해요!',
+                instrTitle: '📝 사용 방법',
+                instr1: '표:',
+                instr1Desc: '시간별 온도 입력 (1분 단위, 15~40℃)',
+                instr2: '그래프:',
+                instr2Desc: '물/모래 선택 후 클릭으로 입력',
+                instr3: '초기화:',
+                instr3Desc: '모든 데이터 삭제',
+                instr4: '이미지 저장:',
+                instr4Desc: '결과를 사진으로 저장',
+                tableTitle: '1️⃣ 시간별 온도 입력하기',
+                lightOnHeader: '🔆 전등 켰을 때<br>(0~5분)',
+                lightOffHeader: '🌙 전등 껐을 때<br>(6~10분)',
+                waterLabel: '물<br>(℃)',
+                sandLabel: '모래<br>(℃)',
+                graphTitle: '2️⃣ 온도 변화 그래프 그리기',
+                waterBtnLabel: '물',
+                sandBtnLabel: '모래',
+                selectedType: '물',
+                graphHintText: '선택됨 - 그래프를 클릭하여 온도 입력',
+                saveBtnText: '이미지 저장',
+                resetBtnText: '초기화',
+                worksheetTitle: '온도 측정 학습지',
+                worksheetSubtitle: '지면과 수면의 온도는 어떻게 변할까요?',
+                downloadBtnText: '학습지 PDF 다운로드',
+                modalTitle: '✅ 저장 완료!',
+                modalMsg: '이미지가 다운로드되었습니다.',
+                closeModalBtn: '확인',
+                confirmReset: '모든 데이터를 삭제하시겠습니까?',
+                saveSuccess: '이미지가 다운로드되었습니다.',
+                saveFailed: '이미지 저장에 실패했습니다.'
+            },
+            yue: {
+                schoolName: '約水小學校',
+                title: '溫度測量數據輸入工具',
+                subtitle: '每分鐘觀察10分鐘的溫度變化！',
+                instrTitle: '📝 使用說明',
+                instr1: '表格：',
+                instr1Desc: '輸入每分鐘的溫度（1分鐘為單位，15～40℃）',
+                instr2: '圖表：',
+                instr2Desc: '選擇水或沙，然後按一下以輸入溫度',
+                instr3: '重新設置：',
+                instr3Desc: '刪除所有數據',
+                instr4: '保存圖像：',
+                instr4Desc: '將結果保存為照片',
+                tableTitle: '1️⃣ 按時間輸入溫度',
+                lightOnHeader: '🔆 打開燈<br>(0～5分)',
+                lightOffHeader: '🌙 關閉燈<br>(6～10分)',
+                waterLabel: '水<br>(℃)',
+                sandLabel: '沙<br>(℃)',
+                graphTitle: '2️⃣ 繪製溫度變化圖表',
+                waterBtnLabel: '水',
+                sandBtnLabel: '沙',
+                selectedType: '水',
+                graphHintText: '已選擇 - 按一下圖表以輸入溫度',
+                saveBtnText: '保存圖像',
+                resetBtnText: '重新設置',
+                worksheetTitle: '溫度測量工作表',
+                worksheetSubtitle: '地表和水面的溫度如何變化？',
+                downloadBtnText: '下載工作表 PDF',
+                modalTitle: '✅ 保存完成！',
+                modalMsg: '圖像已下載。',
+                closeModalBtn: '確認',
+                confirmReset: '你想刪除所有數據嗎？',
+                saveSuccess: '圖像已下載。',
+                saveFailed: '保存圖像失敗。'
+            }
+        };
+
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            
+            // 언어 버튼 업데이트
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // 콘텐츠 업데이트
+            const t = translations[lang];
+            document.getElementById('schoolName').textContent = t.schoolName;
+            document.getElementById('title').textContent = t.title;
+            document.getElementById('subtitle').textContent = t.subtitle;
+            document.getElementById('instrTitle').textContent = t.instrTitle;
+            document.getElementById('instr1').textContent = t.instr1;
+            document.getElementById('instr1Desc').textContent = t.instr1Desc;
+            document.getElementById('instr2').textContent = t.instr2;
+            document.getElementById('instr2Desc').textContent = t.instr2Desc;
+            document.getElementById('instr3').textContent = t.instr3;
+            document.getElementById('instr3Desc').textContent = t.instr3Desc;
+            document.getElementById('instr4').textContent = t.instr4;
+            document.getElementById('instr4Desc').textContent = t.instr4Desc;
+            document.getElementById('tableTitle').textContent = t.tableTitle;
+            document.getElementById('lightOnHeader').innerHTML = t.lightOnHeader;
+            document.getElementById('lightOffHeader').innerHTML = t.lightOffHeader;
+            document.getElementById('waterLabel').innerHTML = t.waterLabel;
+            document.getElementById('sandLabel').innerHTML = t.sandLabel;
+            document.getElementById('graphTitle').textContent = t.graphTitle;
+            document.getElementById('waterBtnLabel').textContent = t.waterBtnLabel;
+            document.getElementById('sandBtnLabel').textContent = t.sandBtnLabel;
+            document.getElementById('selectedType').textContent = t.selectedType;
+            document.getElementById('graphHintText').textContent = t.graphHintText;
+            document.getElementById('saveBtnText').textContent = t.saveBtnText;
+            document.getElementById('resetBtnText').textContent = t.resetBtnText;
+            document.getElementById('worksheetSchoolName').textContent = t.schoolName;
+            document.getElementById('worksheetTitle').textContent = t.worksheetTitle;
+            document.getElementById('worksheetSubtitle').textContent = t.worksheetSubtitle;
+            document.getElementById('downloadBtnText').textContent = t.downloadBtnText;
+            document.getElementById('modalTitle').textContent = t.modalTitle;
+            document.getElementById('modalMsg').textContent = t.modalMsg;
+            document.getElementById('closeModalBtn').textContent = t.closeModalBtn;
+            document.getElementById('legendWater').textContent = t.waterBtnLabel;
+            document.getElementById('legendSand').textContent = t.sandBtnLabel;
+        }
+
+        // 탭 전환 함수
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 1분 간격: 0~10분 (11개 데이터)
+        const TIMES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        const X_POSITIONS = [100, 177, 254, 331, 408, 485, 562, 639, 716, 793, 870];
+        const Y_SCALE = 500 / 20; // 35 - 15 = 20도 범위
+        const MIN_TEMP = 15;
+        const MAX_TEMP = 35;
+
+        let graphData = {
+            water: {},
+            sand: {}
+        };
+
+        let selectedType = 'water';
+
+        TIMES.forEach(time => {
+            graphData.water[time] = null;
+            graphData.sand[time] = null;
+        });
+
+        // 버튼 선택 이벤트
+        document.getElementById('waterBtn').addEventListener('click', function() {
+            selectedType = 'water';
+            updateTypeSelection();
+        });
+
+        document.getElementById('sandBtn').addEventListener('click', function() {
+            selectedType = 'sand';
+            updateTypeSelection();
+        });
+
+        function updateTypeSelection() {
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-type="${selectedType}"]`).classList.add('active');
+            const typeLabel = selectedType === 'water' ? translations[currentLanguage].waterBtnLabel : translations[currentLanguage].sandBtnLabel;
+            document.getElementById('selectedType').textContent = typeLabel;
+        }
+
+        // 표 입력 이벤트 - 자동 다음 칸 포커스
+        document.querySelectorAll('.temp-input').forEach(input => {
+            input.addEventListener('input', function() {
+                const time = parseInt(this.dataset.time);
+                const type = this.classList.contains('water') ? 'water' : 'sand';
+                const value = this.value;
+                
+                if (value === '' || value === '-') {
+                    graphData[type][time] = null;
+                } else {
+                    const temp = parseFloat(value);
+                    graphData[type][time] = temp >= MIN_TEMP && temp <= MAX_TEMP ? temp : null;
+                }
+                
+                updateGraph();
+
+                // 자동으로 다음 칸으로 포커스 이동 - 소수점 첫째자리 입력시만 넘어감
+                if (value !== '' && parseFloat(value) >= MIN_TEMP && parseFloat(value) <= MAX_TEMP) {
+                    // 소수점 첫째자리가 있는지 확인 (예: 19.8)
+                    const hasDecimal = /^\d+\.\d$/.test(value.trim());
+                    
+                    if (hasDecimal) {
+                        const nextTime = time + 1;
+                        const nextInput = document.querySelector(`input[data-time="${nextTime}"].${type}`);
+                        if (nextInput) {
+                            setTimeout(() => nextInput.focus(), 100);
+                        }
+                    }
+                }
+            });
+
+            // Enter 키로도 다음 칸으로 이동
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    const time = parseInt(this.dataset.time);
+                    const type = this.classList.contains('water') ? 'water' : 'sand';
+                    const nextTime = time + 1;
+                    const nextInput = document.querySelector(`input[data-time="${nextTime}"].${type}`);
+                    if (nextInput) {
+                        nextInput.focus();
+                    }
+                }
+            });
+        });
+
+        // 그래프 클릭 이벤트
+        document.getElementById('graph').addEventListener('click', function(e) {
+            const svg = this;
+            const rect = svg.getBoundingClientRect();
+            const scaleX = svg.viewBox.baseVal.width / rect.width;
+            const scaleY = svg.viewBox.baseVal.height / rect.height;
+            
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            let closestTime = TIMES[0];
+            let minDistance = Math.abs(x - X_POSITIONS[0]);
+
+            for (let i = 1; i < TIMES.length; i++) {
+                const distance = Math.abs(x - X_POSITIONS[i]);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestTime = TIMES[i];
+                }
+            }
+
+            let temp = Math.round(((550 - y) / Y_SCALE + 15) * 10) / 10;
+            temp = Math.max(MIN_TEMP, Math.min(MAX_TEMP, temp));
+
+            graphData[selectedType][closestTime] = temp;
+            
+            document.querySelector(`input[data-time="${closestTime}"].${selectedType}`).value = temp;
+            
+            updateGraph();
+        });
+
+        // 그래프 업데이트
+        function updateGraph() {
+            const svg = document.getElementById('graph');
+            const graphLine = document.getElementById('graphLine');
+            const graphPoints = document.getElementById('graphPoints');
+
+            graphLine.innerHTML = '';
+            graphPoints.innerHTML = '';
+
+            drawTypeData('water', '#2196F3', graphLine, graphPoints);
+            drawTypeData('sand', '#FF9800', graphLine, graphPoints);
+        }
+
+        // 각 타입별 데이터 그리기
+        function drawTypeData(type, color, graphLine, graphPoints) {
+            const validPoints = [];
+            TIMES.forEach((time, index) => {
+                if (graphData[type][time] !== null && graphData[type][time] !== undefined) {
+                    const x = X_POSITIONS[index];
+                    const y = 550 - ((graphData[type][time] - 15) * Y_SCALE);
+                    validPoints.push({ time, x, y, temp: graphData[type][time] });
+                }
+            });
+
+            if (validPoints.length > 0) {
+                let pathData = `M ${validPoints[0].x} ${validPoints[0].y}`;
+                for (let i = 1; i < validPoints.length; i++) {
+                    pathData += ` L ${validPoints[i].x} ${validPoints[i].y}`;
+                }
+                
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', pathData);
+                path.setAttribute('stroke', color);
+                path.setAttribute('stroke-width', '4');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke-linecap', 'round');
+                path.setAttribute('stroke-linejoin', 'round');
+                graphLine.appendChild(path);
+
+                validPoints.forEach(point => {
+                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    circle.setAttribute('cx', point.x);
+                    circle.setAttribute('cy', point.y);
+                    circle.setAttribute('r', '8');
+                    circle.setAttribute('fill', color);
+                    const darkerColor = color === '#2196F3' ? '#1565C0' : '#F57C00';
+                    circle.setAttribute('stroke', darkerColor);
+                    circle.setAttribute('stroke-width', '2');
+                    graphPoints.appendChild(circle);
+
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', point.x);
+                    text.setAttribute('y', point.y - 15);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('font-size', '16');
+                    text.setAttribute('font-weight', 'bold');
+                    text.setAttribute('fill', color);
+                    text.textContent = point.temp + '℃';
+                    graphPoints.appendChild(text);
+                });
+            }
+        }
+
+        // 초기화 함수
+        document.getElementById('resetBtn').addEventListener('click', function() {
+            const confirmMsg = translations[currentLanguage].confirmReset;
+            if (confirm(confirmMsg)) {
+                TIMES.forEach(time => {
+                    graphData.water[time] = null;
+                    graphData.sand[time] = null;
+                    document.querySelector(`input[data-time="${time}"].water`).value = '';
+                    document.querySelector(`input[data-time="${time}"].sand`).value = '';
+                });
+                updateGraph();
+            }
+        });
+
+        // 이미지 저장 함수
+        document.getElementById('saveImageBtn').addEventListener('click', function() {
+            html2canvas(document.querySelector('#input'), {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = '온도_측정_데이터_' + new Date().getTime() + '.png';
+                link.click();
+                
+                showModal();
+            }).catch(error => {
+                console.error('이미지 저장 실패:', error);
+                alert(translations[currentLanguage].saveFailed);
+            });
+        });
+
+        // PDF 다운로드 함수
+        document.getElementById('downloadPdfBtn').addEventListener('click', function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            let yPos = 15;
+
+            const t = translations[currentLanguage];
+
+            // 제목
+            doc.setFontSize(18);
+            doc.setTextColor(33, 150, 243);
+            doc.text(t.schoolName, pageWidth / 2, yPos, { align: 'center' });
+            yPos += 8;
+
+            doc.setFontSize(14);
+            doc.text(t.worksheetTitle, pageWidth / 2, yPos, { align: 'center' });
+            yPos += 10;
+
+            // 학생 정보
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text(currentLanguage === 'ko' ? '학년 ___ 반 ___ 모둠 ___ 이름 _________________' : '年級 ___ 班 ___ 組 ___ 名字 _________________', 15, yPos);
+            yPos += 10;
+
+            // 실험 설명
+            doc.setFontSize(10);
+            doc.text(currentLanguage === 'ko' ? '다음은 모래와 물의 온도 변화를 측정하는 실험입니다.' : '以下是測量沙和水溫度變化的實驗。', 15, yPos);
+            yPos += 5;
+            doc.text(currentLanguage === 'ko' ? '1분 간격으로 10분 동안 온도를 측정해 표와 그래프로 나타내봅시다.' : '每分鐘測量10分鐘的溫度，並用表格和圖表表示。', 15, yPos);
+            yPos += 10;
+
+            // 표
+            doc.setFontSize(9);
+            const tableData = [
+                ['분', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+                [currentLanguage === 'ko' ? '물(℃)' : '水(℃)', '', '', '', '', '', '', '', '', '', '', ''],
+                [currentLanguage === 'ko' ? '모래(℃)' : '沙(℃)', '', '', '', '', '', '', '', '', '', '', '']
+            ];
+
+            doc.autoTable({
+                startY: yPos,
+                head: [tableData[0]],
+                body: tableData.slice(1),
+                theme: 'grid',
+                columnStyles: {
+                    0: { cellWidth: 12, halign: 'center', fontStyle: 'bold' }
+                },
+                margin: { left: 15, right: 15 },
+                cellWidth: (pageWidth - 30) / 12,
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+
+            // 그래프 제목
+            doc.setFontSize(11);
+            doc.setTextColor(33, 150, 243);
+            doc.text(currentLanguage === 'ko' ? '온도 변화 그래프' : '溫度變化圖表', pageWidth / 2, yPos, { align: 'center' });
+            yPos += 8;
+
+            // 그래프 공간
+            const graphLeft = 20;
+            const graphTop = yPos;
+            const graphWidth = 170;
+            const graphHeight = 80;
+
+            doc.setTextColor(0, 0, 0);
+
+            // 축
+            doc.line(graphLeft, graphTop, graphLeft, graphTop + graphHeight);
+            doc.line(graphLeft, graphTop + graphHeight, graphLeft + graphWidth, graphTop + graphHeight);
+
+            // Y축 레이블
+            doc.setFontSize(8);
+            doc.text('35', graphLeft - 5, graphTop + 2, { align: 'right' });
+            doc.text('30', graphLeft - 5, graphTop + 20, { align: 'right' });
+            doc.text('25', graphLeft - 5, graphTop + 40, { align: 'right' });
+            doc.text('20', graphLeft - 5, graphTop + 60, { align: 'right' });
+            doc.text('15', graphLeft - 5, graphTop + graphHeight + 2, { align: 'right' });
+
+            // X축 레이블
+            const xLabels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+            const xStep = graphWidth / 10;
+            xLabels.forEach((label, index) => {
+                doc.text(label, graphLeft + index * xStep, graphTop + graphHeight + 5);
+            });
+
+            // 축 제목
+            doc.setFontSize(9);
+            doc.text(currentLanguage === 'ko' ? '시간(분)' : '時間(分)', graphLeft + graphWidth / 2, graphTop + graphHeight + 15, { align: 'center' });
+            doc.text(currentLanguage === 'ko' ? '온도(℃)' : '溫度(℃)', graphLeft - 15, graphTop + graphHeight / 2, { align: 'center', angle: 90 });
+
+            doc.save(currentLanguage === 'ko' ? '온도변화실험학습지.pdf' : '溫度變化實驗工作表.pdf');
+            showModal();
+        });
+
+        function showModal() {
+            document.getElementById('saveModal').classList.add('show');
+            setTimeout(() => {
+                document.getElementById('saveModal').classList.remove('show');
+            }, 2000);
+        }
+
+        function closeModal() {
+            document.getElementById('saveModal').classList.remove('show');
+        }
+
+        updateGraph();
+    </script>
+</body>
+</html>
